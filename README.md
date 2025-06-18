@@ -2,7 +2,63 @@
 
 API para processamento de respostas de questões do SAEB (Sistema de Avaliação da Educação Básica).
 
-## Estrutura da Resposta
+## Autenticação
+
+Todas as requisições à API devem incluir a chave de API no cabeçalho `x-api-key`.
+
+Exemplo de cabeçalho de autenticação:
+
+```http
+x-api-key: sua_chave_aqui_123456
+```
+
+## Exemplos de Requisição
+
+### cURL
+
+```bash
+curl -X POST https://rota-pai.com/process \
+  -H "x-api-key: sua_chave_aqui_123456" \
+  -F "image=@caminho/para/imagem.jpg"
+```
+
+### Python (requests)
+
+```python
+import requests
+
+url = "https://rota-pai.com/process"
+headers = {
+    "x-api-key": "sua_chave_aqui_123456"
+}
+files = {
+    'image': open('caminho/para/imagem.jpg', 'rb')
+}
+
+response = requests.post(url, headers=headers, files=files)
+print(response.json())
+```
+
+### JavaScript (fetch)
+
+```javascript
+const formData = new FormData();
+formData.append('image', document.querySelector('input[type=file]').files[0]);
+
+fetch('https://rota-pai.com/process', {
+  method: 'POST',
+  headers: {
+    'x-api-key': 'sua_chave_aqui_123456'
+  },
+  body: formData
+})
+.then(response => response.json())
+.then(data => console.log(data));
+```
+
+## Respostas da API
+
+### Estrutura da Resposta
 
 A API retorna um objeto JSON com a seguinte estrutura:
 
