@@ -84,29 +84,26 @@ async def analyze_block_async(image_block, block_id):
 
         # Define o schema esperado para a resposta
         response_schema = types.Schema(
-            type=types.Type.OBJECT,
-            properties={
-                "block_id": types.Schema(type=types.Type.INTEGER),
-                "has_unmarked": types.Schema(type=types.Type.BOOLEAN),
-                "has_duplicated": types.Schema(type=types.Type.BOOLEAN),
-                "questions_marked_processed": types.Schema(
-                    type=types.Type.ARRAY,
-                    items=types.Schema(type=types.Type.STRING),
-                ),
-                "is_valid_img": types.Schema(type=types.Type.BOOLEAN),
-            },
-            required=[
-                "block_id",
-                "has_unmarked",
-                "has_duplicated",
-                "questions_marked_processed",
-                "is_valid_img",
-            ],
-        )
+    type=types.Type.OBJECT,
+    properties={
+        "questions_marked_processed": types.Schema(
+            type=types.Type.ARRAY,
+            items=types.Schema(
+                type=types.Type.OBJECT,
+                properties={
+                    "question": types.Schema(type=types.Type.STRING),
+                    "answer":   types.Schema(type=types.Type.STRING),
+                },
+                required=["question", "answer"],
+            ),
+        ),
+        "is_valid_img": types.Schema(type=types.Type.BOOLEAN),
+    },
+    required=["questions_marked_processed", "is_valid_img"],
+)
 
-        # Calcula o range de questões para cada bloco
-        start_question = (block_id - 1) * 11 + 1  # Assumindo 11 questões por bloco
-        end_question = block_id * 11
+
+        
 
         contents = [
             types.Content(
@@ -121,42 +118,38 @@ async def analyze_block_async(image_block, block_id):
                     ),
                     # Prompt solicitando a análise
                     types.Part.from_text(
-                        text=(
-                            f"Analise a imagem contendo um bloco de questões de múltipla escolha "
-                            f"(questões de {start_question} a {end_question}, alternativas A, B, C, D). "
-                            f"Para cada questão, identifique qual alternativa está marcada/pintada. "
-                            f"Retorne um JSON seguindo o schema configurado onde:\n"
-                            f"- block_id: {block_id}\n"
-                            f"- has_unmarked: true se alguma questão não tem nenhuma alternativa marcada\n"
-                            f"- has_duplicated: true se alguma questão tem múltiplas alternativas marcadas\n"
-                            f"- questions_marked_processed: array com as respostas no formato ['1':'A', '2':'B', '3':'C', etc.]\n"
-                            f"- is_valid_img: true se a imagem é legível e processável\n"
-                            f"Considere apenas marcações claras e visíveis (círculos pintados/preenchidos)."
+        text=(
+            f"Analise a imagem contendo um bloco de questões de múltipla escolha. "
+            f"Para cada questão, identifique qual alternativa está marcada/pintada. "
+            f"Retorne um JSON seguindo o schema configurado onde:\n"
+            f"- block_id: {block_id}\n"
+            f"- questions_marked_processed: objeto JSON mapeando número da questão à alternativa marcada, "
+            f"ex.: {{\"1\":\"A\",\"2\":\"B\",\"3\":\"C\",…}}\n"
+            f"Considere apenas marcações claras e visíveis (círculos pintados/preenchidos).\n"
+            f"Sempre use chaves e aspas corretamente, exemplo: \"1\":\"B\" e não \"1\":B.\n\n"
+            """Exemplo de resposta:
 
-                            ''' exemplo de resposta:
-                            {
-                                "block_id": 1,
-                                "has_unmarked": false,
-                                "has_duplicated": false,
-                                "questions_marked_processed": [
-                                    "1:A",
-                                    "2:B",
-                                    "3:C",
-                                    "4:D",
-                                    "5:A",
-                                    "6:B",
-                                    "7:C",
-                                    "8:D",
-                                    "9:A",
-                                    "10:B",
-                                    "11:C"
-                                ],
-                                "is_valid_img": true
-                            }
+        {
+            "questions_marked_processed": {
+                "1": "A",
+                "2": "B",
+                "3": "A,C",
+                "4": "D",
+                "5": "A",
+                "6": null,
+                "7": "C",
+                "8": "D",
+                "9": "A",
+                "10": "B",
+                "11": "C"
+            },
+            "is_valid_img": true
+        }
+        """
+        )
 
-                            '''
-                        )
-                    ),
+    ),
+
                 ],
             )
         ]
@@ -174,6 +167,7 @@ async def analyze_block_async(image_block, block_id):
             config=generate_content_config,
         )
         try:
+            print(response.text)
             # Tenta decodificar a resposta JSON
             response_json = json.loads(response.text)
             return response_json

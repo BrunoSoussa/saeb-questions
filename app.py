@@ -4,7 +4,7 @@ import os
 import asyncio
 from werkzeug.utils import secure_filename
 
-from gemini_model import( 
+from gemini_model import (
     segment_image_blocks,
     process_blocks_async
 )
@@ -13,12 +13,15 @@ app = Flask(__name__)
 
 @app.route("/analyze", methods=["POST"])
 def analyze_image():
+    if 'X-API-KEY' not in request.headers:
+        return jsonify({"error": "Chave de API não fornecida."}), 401
+    elif request.headers['X-API-KEY'] != os.getenv("API_KEY"):
+        return jsonify({"error": "Chave de API inválida."}), 401
+    
     if 'image' not in request.files:
         return jsonify({"error": "Nenhuma imagem enviada."}), 400
 
     image_file = request.files['image']
-    
-
     # Salva temporariamente a imagem
     with tempfile.NamedTemporaryFile(delete=False, suffix=".jpeg") as tmp:
         image_path = tmp.name
@@ -27,7 +30,6 @@ def analyze_image():
     try:
         # Segmenta os blocos da imagem
         segmented_blocks = segment_image_blocks(image_path, method="optimized")
-
         if not segmented_blocks:
             return jsonify({"error": "Falha na segmentação da imagem."}), 422
 
@@ -36,15 +38,43 @@ def analyze_image():
 
         result = []
         for i, r in enumerate(responses, start=1):
-            try:
-                result.append({"block": i, "response": r})
-            except Exception as e:
-                result.append({"block": i, "error": str(e)})
+            if not r or "questions_marked_processed" not in r:
+                result.append({"block": i, "error": "Resposta inválida"})
+                continue
 
-        return {
+            # Normaliza os itens
+            normalized = {
+                "questions_marked_processed": [],
+                "is_valid_img": r.get("is_valid_img", False)
+            }
+
+            for item in r["questions_marked_processed"]:
+                q_raw = item.get("question", "")
+                a_raw = item.get("answer", None)
+
+                # Converte a chave para inteiro (removendo zeros à esquerda)
+                try:
+                    q = int(q_raw.lstrip("0") or "0")
+                except ValueError:
+                    q = q_raw  # mantém string original se falhar
+
+                # Converte resposta para lowercase, se for string
+                if isinstance(a_raw, str):
+                    a = a_raw.lower()
+                else:
+                    a = a_raw
+
+                normalized["questions_marked_processed"].append({
+                    "question": q,
+                    "answer": a
+                })
+
+            result.append({"block": i, "response": normalized})
+
+        return jsonify({
             "status": "success",
             "blocks": result
-        }
+        })
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
