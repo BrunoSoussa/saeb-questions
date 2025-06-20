@@ -29,7 +29,8 @@ def analyze_image():
     elif request.headers['X-API-KEY'] != os.getenv("X-API-KEY"):
         print("Chave de API inválida:", request.headers['X-API-KEY'])
         print("Chave de API correta:", os.getenv("X-API-KEY"))
-        return jsonify({"error": "Chave de API inválida."}), 401
+        return jsonify({f"error": f"Chave de API inválida: {request.headers['X-API-KEY']} chave esperada {os.getenv("X-API-KEY")}"}), 401
+        #return jsonify({"error": "Chave de API inválida."}), 401
     
     if 'image' not in request.files:
         return jsonify({"error": "Nenhuma imagem enviada."}), 400
