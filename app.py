@@ -3,6 +3,9 @@ import tempfile
 import os
 import asyncio
 from werkzeug.utils import secure_filename
+import dotenv
+
+dotenv.load_dotenv()
 
 from gemini_model import (
     segment_image_blocks,
@@ -11,11 +14,21 @@ from gemini_model import (
 
 app = Flask(__name__)
 
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
+app.config['RATE_LIMIT'] = '100 per second'  
+
+
+@app.route("/")
+def index():
+    return jsonify({"message": "API de Análise de Imagens"}), 200
+
 @app.route("/analyze", methods=["POST"])
 def analyze_image():
     if 'X-API-KEY' not in request.headers:
         return jsonify({"error": "Chave de API não fornecida."}), 401
-    elif request.headers['X-API-KEY'] != os.getenv("API_KEY"):
+    elif request.headers['X-API-KEY'] != os.getenv("X-API-KEY"):
+        print("Chave de API inválida:", request.headers['X-API-KEY'])
+        print("Chave de API correta:", os.getenv("X-API-KEY"))
         return jsonify({"error": "Chave de API inválida."}), 401
     
     if 'image' not in request.files:
