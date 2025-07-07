@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def detect_question_blocks(path, 
-                          h_start_frac=0.35, h_end_frac=0.95,
+                          h_start_frac=0.2, h_end_frac=0.95,
                           min_block_height=100,
                           col_thresh_frac=0.03,
                           row_thresh_frac=0.05):
@@ -184,7 +184,7 @@ def detect_question_blocks(path,
     return left, right
 
 # Função otimizada especificamente para cartões resposta
-def detect_answer_sheet_blocks(path, skip_top_frac=0.4, skip_bottom_frac=0.05):
+def detect_answer_sheet_blocks(path, skip_top_frac=0.05, skip_bottom_frac=0.05):
     """
     Versão otimizada para cartões resposta com dois blocos lado a lado.
     Ignora cabeçalho maior e foca na área dos blocos de questões.
@@ -281,7 +281,7 @@ def detect_question_blocks_simple(path, skip_top_frac=0.35, skip_bottom_frac=0.0
 
 # Teste com todas as versões
 if __name__ == "__main__":
-    path = 'WhatsApp Image 2025-06-17 at 14.50.53.jpeg'
+    path = 'WhatsApp Image 2025-07-07 at 14.48.06.jpeg'
     
     print("=== Versão otimizada para cartão resposta ===")
     left_opt, right_opt, crop_opt, projection, split_point = detect_answer_sheet_blocks(path)

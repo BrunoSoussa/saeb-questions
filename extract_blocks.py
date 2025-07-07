@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # 1) Carrega a imagem e faz um resize “suave” (opcional, só se a imagem for enorme)
-image_path = 'WhatsApp Image 2025-06-04 at 09.39.16.jpeg'
+image_path = 'WhatsApp Image 2025-07-04 at 14.04.06 (1).jpeg'
 orig = cv2.imread(image_path)
 img = orig.copy()
 h_img, w_img = img.shape[:2]
