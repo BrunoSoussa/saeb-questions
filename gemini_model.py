@@ -71,7 +71,7 @@ async def analyze_block_async(image_block, block_id):
             api_key=os.getenv("GENAI_API_KEY"),
         )
 
-        model = "gemini-2.0-flash"
+        model = "gemini-2.5-flash"
 
         # Verifica se o bloco é válido
         if image_block is None or image_block.size == 0:
